@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+(function(){var k=sessionStorage.getItem('auth');if(k!=='ok'){var p=prompt('パスワードを入力してください');if(p==='dot.kurano'){sessionStorage.setItem('auth','ok');}else{document.write('<p style="font-family:sans-serif;padding:2em">パスワードが違います。ページを再読み込みしてください。</p>');document.close();}}})();
+</script>
 <title>収支報告 改善に向けた取り組み — dot</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
