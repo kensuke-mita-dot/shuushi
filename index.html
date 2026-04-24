@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>収支報告 改善に向けた取り組み — dot</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:       #f0efeb;
+    --surface:  #ffffff;
+    --surface2: #f7f7f5;
+    --border:   rgba(0,0,0,0.10);
+    --border-m: rgba(0,0,0,0.18);
+    --text:     #1a1a18;
+    --text2:    #5f5e5a;
+    --text3:    #888780;
+    --green:    #1D9E75;
+    --green-dk: #0F6E56;
+    --green-lt: #E1F5EE;
+    --green-md: #9FE1CB;
+    --blue:     #185FA5;
+    --blue-dk:  #0C447C;
+    --blue-lt:  #E6F1FB;
+    --amber-lt: #FAEEDA;
+    --amber-bd: #EF9F27;
+    --r:        12px;
+    --rs:       8px;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.7;
+  }
+
+  nav {
+    background: var(--surface); border-bottom: 0.5px solid var(--border);
+    padding: 13px 32px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-logo { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 500; }
+  .nav-dot  { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  .nav-links { display: flex; gap: 22px; }
+  .nav-links a { font-size: 13px; color: var(--text2); text-decoration: none; }
+  .nav-links a:hover { color: var(--text); }
+
+  .hero { max-width: 720px; margin: 0 auto; padding: 64px 32px 52px; text-align: center; }
+  .eyebrow {
+    display: inline-block; font-size: 11px; font-weight: 500; letter-spacing: 0.07em;
+    color: var(--green-dk); background: var(--green-lt);
+    padding: 4px 14px; border-radius: 20px; margin-bottom: 20px;
+  }
+  .hero h1 { font-size: 27px; font-weight: 500; line-height: 1.45; margin-bottom: 16px; letter-spacing: -0.01em; }
+  .hero p  { font-size: 14px; color: var(--text2); max-width: 520px; margin: 0 auto 28px; line-height: 1.85; }
+  .hero-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .btn-p {
+    padding: 10px 22px; background: var(--blue); color: #fff;
+    border: none; border-radius: var(--rs); font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: inherit; text-decoration: none; transition: background 0.15s;
+  }
+  .btn-p:hover { background: var(--blue-dk); }
+  .btn-g {
+    padding: 10px 22px; background: var(--surface); color: var(--text2);
+    border: 0.5px solid var(--border-m); border-radius: var(--rs);
+    font-size: 14px; font-family: inherit; text-decoration: none; transition: background 0.15s;
+  }
+  .btn-g:hover { background: var(--surface2); }
+
+  .sec { max-width: 720px; margin: 0 auto; padding: 52px 32px; }
+  .sec-bg { background: var(--surface); border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); }
+  .sec-bg .sec { padding: 52px 32px; }
+  .sec-label { font-size: 11px; font-weight: 500; letter-spacing: 0.07em; color: var(--text3); margin-bottom: 12px; }
+  .sec h2   { font-size: 20px; font-weight: 500; margin-bottom: 8px; }
+  .sec .lead { font-size: 14px; color: var(--text2); line-height: 1.85; margin-bottom: 28px; }
+
+  .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 0; }
+  .ba-card { border-radius: var(--r); padding: 20px 22px; border: 0.5px solid var(--border); }
+  .ba-card.before { background: var(--surface2); }
+  .ba-card.after  { background: var(--green-lt); border-color: var(--green-md); }
+  .ba-head { font-size: 11px; font-weight: 500; letter-spacing: 0.05em; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+  .ba-card.before .ba-head { color: var(--text3); }
+  .ba-card.after  .ba-head { color: var(--green-dk); }
+  .ba-hdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .ba-card.before .ba-hdot { background: var(--text3); }
+  .ba-card.after  .ba-hdot { background: var(--green); }
+  .fl { display: flex; flex-direction: column; }
+  .fl-item { display: flex; align-items: flex-start; gap: 10px; }
+  .fl-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .fl-circle { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; }
+  .ba-card.before .fl-circle { background: #e4e2dc; color: var(--text2); }
+  .ba-card.after  .fl-circle { background: var(--green-md); color: #085041; }
+  .fl-vline { width: 1px; background: var(--border-m); min-height: 16px; margin: 2px 0; flex: 1; }
+  .fl-body { padding: 3px 0 14px; }
+  .fl-item:last-child .fl-body { padding-bottom: 0; }
+  .fl-item:last-child .fl-vline { display: none; }
+  .fl-name { font-size: 13px; font-weight: 500; line-height: 1.3; }
+  .fl-role { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .ba-note { margin-top: 12px; padding: 7px 11px; border-radius: var(--rs); font-size: 12px; font-weight: 500; display: flex; align-items: flex-start; gap: 6px; }
+  .ba-card.before .ba-note { background: #e4e2dc; color: var(--text2); }
+  .ba-card.after  .ba-note { background: var(--green-md); color: #085041; }
+
+  .pillar { margin-bottom: 40px; }
+  .pillar:last-child { margin-bottom: 0; }
+  .pillar-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 0.5px solid var(--border); }
+  .pillar-num { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; flex-shrink: 0; background: var(--blue-lt); color: var(--blue-dk); }
+  .pillar-title { font-size: 16px; font-weight: 500; }
+  .pillar-sub   { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  .dgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .dc { background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--rs); padding: 14px 16px; }
+  .dc.hl { background: var(--blue-lt); border-color: #B5D4F4; }
+  .dc-lbl  { font-size: 11px; font-weight: 500; color: var(--text3); margin-bottom: 6px; }
+  .dc.hl .dc-lbl { color: var(--blue-dk); }
+  .dc-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .dc-desc  { font-size: 12px; color: var(--text2); line-height: 1.65; }
+
+  .flow-row { display: grid; grid-template-columns: 1fr 28px 1fr 28px 1fr; align-items: start; margin-bottom: 0; }
+  .fstep { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); padding: 18px 16px; }
+  .fstep.s1 { border-top: 3px solid var(--blue); }
+  .fstep.s2 { border-top: 3px solid var(--green); }
+  .fstep.s3 { border-top: 3px solid var(--amber-bd); }
+  .fstep-num { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; margin-bottom: 8px; }
+  .s1 .fstep-num { background: var(--blue-lt); color: var(--blue-dk); }
+  .s2 .fstep-num { background: var(--green-lt); color: #085041; }
+  .s3 .fstep-num { background: var(--amber-lt); color: #633806; }
+  .fstep-who   { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
+  .fstep-title { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+  .fstep-desc  { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .fstep-link  { display: inline-block; margin-top: 10px; font-size: 12px; color: var(--blue); text-decoration: none; font-weight: 500; }
+  .fstep-link:hover { text-decoration: underline; }
+  .farrow { display: flex; align-items: center; justify-content: center; padding-top: 32px; color: var(--text3); font-size: 18px; }
+
+  .screen-cards { display: flex; flex-direction: column; gap: 14px; }
+  .scard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
+  .scard-body { display: grid; grid-template-columns: 175px 1fr; }
+  .sthumb { background: var(--surface2); border-right: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; padding: 18px; min-height: 120px; }
+  .thumb-in { width: 100%; background: var(--surface); border: 0.5px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .tbar { height: 7px; }
+  .tbar.blue  { background: var(--blue); }
+  .tbar.green { background: var(--green); }
+  .tbar.amber { background: var(--amber-bd); }
+  .tb { padding: 8px 9px; }
+  .tl { height: 4px; border-radius: 2px; background: var(--surface2); margin-bottom: 5px; }
+  .tr2 { display: flex; gap: 4px; margin-bottom: 5px; }
+  .tc { height: 13px; border-radius: 3px; background: var(--surface2); }
+  .sinfo { padding: 18px 20px; }
+  .sinfo-step  { font-size: 11px; color: var(--text3); font-weight: 500; margin-bottom: 4px; }
+  .sinfo-title { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+  .sinfo-desc  { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 12px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+  .pill { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border); }
+  .slink { display: inline-block; padding: 6px 14px; border: 0.5px solid var(--border-m); border-radius: var(--rs); font-size: 13px; color: var(--text2); text-decoration: none; background: var(--surface); transition: background 0.12s; }
+  .slink:hover { background: var(--surface2); color: var(--text); }
+
+  .rule-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .rule-tbl th { padding: 9px 12px; text-align: left; font-size: 11px; font-weight: 500; color: var(--text3); background: var(--surface2); border-bottom: 0.5px solid var(--border); }
+  .rule-tbl td { padding: 11px 12px; border-bottom: 0.5px solid var(--border); color: var(--text2); vertical-align: top; }
+  .rule-tbl tr:last-child td { border-bottom: none; }
+  .rule-tbl td:first-child { font-weight: 500; color: var(--text); white-space: nowrap; }
+
+  footer { background: var(--surface); border-top: 0.5px solid var(--border); padding: 24px 32px; text-align: center; font-size: 12px; color: var(--text3); }
+
+  @media (max-width: 580px) {
+    .ba-grid { grid-template-columns: 1fr; }
+    .flow-row { grid-template-columns: 1fr; }
+    .farrow { transform: rotate(90deg); padding: 0 0 8px; }
+    .scard-body { grid-template-columns: 1fr; }
+    .sthumb { border-right: none; border-bottom: 0.5px solid var(--border); min-height: 70px; }
+    .hero h1 { font-size: 22px; }
+    nav { padding: 13px 16px; }
+    .sec { padding: 36px 16px; }
+    .sec-bg .sec { padding: 36px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><span class="nav-dot"></span>収支報告 改善に向けた取り組み — dot</div>
+  <div class="nav-links">
+    <a href="#taisei">体制</a>
+    <a href="#action">アクション</a>
+    <a href="#screens">画面</a>
+    <a href="#rules">運用ルール</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <span class="eyebrow">dot → 小学館不動産・倉野様</span>
+  <h1>収支報告の改善に向けた<br>社内体制・フロー見直しのご報告</h1>
+  <p>2023〜2025年度における収支報告の計上漏れ（合計 ¥15,090,665）を受け、再発防止に向けた社内体制・フロー・フォーマット・運用ルールの見直しを実施しました。2026年2月分の報告より順次運用を開始しています。</p>
+  <div class="hero-btns">
+    <a class="btn-p" href="#action">改善アクションを見る</a>
+    <a class="btn-g" href="#screens">画面モックを見る</a>
+  </div>
+</div>
+
+<!-- 体制 -->
+<div class="sec-bg" id="taisei">
+  <div class="sec">
+    <div class="sec-label">1. 体制見直し</div>
+    <h2>報告体制：これまでと今後</h2>
+    <p class="lead">これまでは現場担当から直接ご報告する体制でしたが、確認フローが担当者個人に依存しており、引き継ぎ時の情報共有が不十分なまま運用が続いていました。今後は経理・マネージャーを介した3段階の承認体制に移行します。</p>
+    <div class="ba-grid">
+      <div class="ba-card before">
+        <div class="ba-head"><span class="ba-hdot"></span>これまでの体制</div>
+        <div class="fl">
+          <div class="fl-item">
+            <div class="fl-left"><div class="fl-circle">現場</div><div class="fl-vline"></div></div>
+            <div class="fl-body">
+              <div class="fl-name">鶴田 / 亥川</div>
+              <div class="fl-role">現場担当 — 支出まとめ・報告作成</div>
+            </div>
+          </div>
+          <div class="fl-item">
+            <div class="fl-left"><div class="fl-circle">先方</div></div>
+            <div class="fl-body">
+              <div class="fl-name">倉野さん（小学館不動産）</div>
+              <div class="fl-role">報告受領</div>
+            </div>
+          </div>
+        </div>
+        <div class="ba-note">⚠ 確認フローが担当者に依存しており、属人的な運用が続いていた</div>
+      </div>
+      <div class="ba-card after">
+        <div class="ba-head"><span class="ba-hdot"></span>今後の体制（2026年2月運用開始）</div>
+        <div class="fl">
+          <div class="fl-item">
+            <div class="fl-left"><div class="fl-circle">1</div><div class="fl-vline"></div></div>
+            <div class="fl-body">
+              <div class="fl-name">鶴田 / 亥川</div>
+              <div class="fl-role">現場担当 — 支出入力・領収書添付・提出</div>
+            </div>
+          </div>
+          <div class="fl-item">
+            <div class="fl-left"><div class="fl-circle">2</div><div class="fl-vline"></div></div>
+            <div class="fl-body">
+              <div class="fl-name">伊藤</div>
+              <div class="fl-role">経理担当 — 領収書突き合わせ・チェック</div>
+            </div>
+          </div>
+          <div class="fl-item">
+            <div class="fl-left"><div class="fl-circle">3</div><div class="fl-vline"></div></div>
+            <div class="fl-body">
+              <div class="fl-name">三田</div>
+              <div class="fl-role">マネージャー — 最終承認・報告確定</div>
+            </div>
+          </div>
+          <div class="fl-item">
+            <div class="fl-left"><div class="fl-circle">先方</div></div>
+            <div class="fl-body">
+              <div class="fl-name">倉野さん（小学館不動産）</div>
+              <div class="fl-role">報告受領 — 承認済みレポートをご提出</div>
+            </div>
+          </div>
+        </div>
+        <div class="ba-note">✓ 3名によるダブルチェック体制で報告精度を担保</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ACTION -->
+<div class="sec" id="action">
+  <div class="sec-label">改善アクション</div>
+  <h2>社内体制・フローの見直し内容</h2>
+  <p class="lead">下記の4つの観点から改善を行い、2026年2月分の報告より順次運用を開始しています。</p>
+
+  <!-- 2. フロー -->
+  <div class="pillar">
+    <div class="pillar-head">
+      <div class="pillar-num">2</div>
+      <div>
+        <div class="pillar-title">フロー見直し</div>
+        <div class="pillar-sub">作業者と入力者を分離し、承認フローをシステム化（ダブルチェック徹底）</div>
+      </div>
+    </div>
+    <div class="flow-row">
+      <div class="fstep s1">
+        <div class="fstep-num">1</div>
+        <div class="fstep-who">鶴田 / 亥川（現場担当）</div>
+        <div class="fstep-title">支出入力・提出</div>
+        <div class="fstep-desc">カテゴリ選択・金額・領収書を入力し、チェックリスト確認後に提出。</div>
+        <a class="fstep-link" href="expense_input_form.html" target="_blank">画面を開く →</a>
+      </div>
+      <div class="farrow">→</div>
+      <div class="fstep s2">
+        <div class="fstep-num">2</div>
+        <div class="fstep-who">伊藤（経理担当）</div>
+        <div class="fstep-title">突き合わせ・チェック</div>
+        <div class="fstep-desc">申請金額と領収書を1件ずつ照合。全件確認後に月次確定が可能に。</div>
+        <a class="fstep-link" href="accounting_final_check.html" target="_blank">画面を開く →</a>
+      </div>
+      <div class="farrow">→</div>
+      <div class="fstep s3">
+        <div class="fstep-num">3</div>
+        <div class="fstep-who">三田（マネージャー）</div>
+        <div class="fstep-title">最終承認・報告確定</div>
+        <div class="fstep-desc">経理チェック済みの申請を最終承認。承認後に倉野さんへ報告提出。</div>
+        <a class="fstep-link" href="manager_approval.html" target="_blank">画面を開く →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. フォーマット -->
+  <div class="pillar">
+    <div class="pillar-head">
+      <div class="pillar-num">3</div>
+      <div>
+        <div class="pillar-title">フォーマット見直し</div>
+        <div class="pillar-sub">チェックリストの整備 ＋ AIプロダクトによる入力・集計の効率化</div>
+      </div>
+    </div>
+    <div class="dgrid">
+      <div class="dc">
+        <div class="dc-lbl">支出チェックリストの作成</div>
+        <div class="dc-title">記入・確認漏れを防ぐ構造へ</div>
+        <div class="dc-desc">カテゴリ・金額（税込）・支出先・摘要・領収書添付の5項目を、提出前に必ず確認する仕組みを導入。全項目チェック前は提出できない設計。</div>
+      </div>
+      <div class="dc hl">
+        <div class="dc-lbl">AIプロダクトの活用</div>
+        <div class="dc-title">スプレッドシート入力・集計の簡易効率化</div>
+        <div class="dc-desc">本資料に掲載の3画面をベースに、支出入力・承認・集計をシステム化。手作業によるスプレッドシート管理から脱却し、ヒューマンエラーを低減します。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 運用ルール -->
+  <div class="pillar">
+    <div class="pillar-head">
+      <div class="pillar-num">4</div>
+      <div>
+        <div class="pillar-title">運用ルール</div>
+        <div class="pillar-sub">月次で経理・マネージャーが支出内容を突き合わせる確認フローを設定</div>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden">
+      <table class="rule-tbl">
+        <thead>
+          <tr>
+            <th style="width:110px">タイミング</th>
+            <th style="width:140px">担当</th>
+            <th>内容</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>月次</td>
+            <td>鶴田 / 亥川</td>
+            <td>当月分の支出を入力・領収書添付のうえ月末までに提出</td>
+          </tr>
+          <tr>
+            <td>月次</td>
+            <td>伊藤（経理）</td>
+            <td>提出された支出と領収書を1件ずつ突き合わせ確認。差異・未添付は差し戻し</td>
+          </tr>
+          <tr>
+            <td>月次</td>
+            <td>三田（MG）</td>
+            <td>経理チェック済み内容を最終承認し、倉野さんへ報告提出</td>
+          </tr>
+          <tr>
+            <td>四半期</td>
+            <td>伊藤 ＋ 三田</td>
+            <td>支出先の棚卸しを実施。不要な取引先の整理・カテゴリ分類の見直し</td>
+          </tr>
+          <tr>
+            <td>随時</td>
+            <td>全員</td>
+            <td>支出漏れが発生した場合は1ヶ月以内に申告。年度変わりのフォーマット更新は都度共有</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SCREENS -->
+<div class="sec-bg" id="screens">
+  <div class="sec">
+    <div class="sec-label">画面モック一覧</div>
+    <h2>システム画面（3画面）</h2>
+    <p class="lead">各役割に対応した画面をHTMLファイルとして用意しています。リンクからそのまま操作・確認いただけます。</p>
+    <div class="screen-cards">
+      <div class="scard">
+        <div class="scard-body">
+          <div class="sthumb">
+            <div class="thumb-in">
+              <div class="tbar blue"></div>
+              <div class="tb">
+                <div class="tl" style="width:80%"></div>
+                <div class="tr2"><div class="tc" style="width:44px"></div><div class="tc" style="width:36px"></div><div class="tc" style="width:42px"></div></div>
+                <div class="tl" style="width:60%"></div>
+                <div class="tl" style="width:75%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="sinfo">
+            <div class="sinfo-step">STEP 1 — 鶴田 / 亥川（現場担当）</div>
+            <div class="sinfo-title">支出入力フォーム</div>
+            <div class="sinfo-desc">カテゴリ選択・金額・支出先・領収書を入力。提出前チェックリストで漏れを防ぎ、承認フローの現在地を常時表示します。</div>
+            <div class="pills">
+              <span class="pill">カテゴリ選択式</span><span class="pill">提出前チェックリスト</span><span class="pill">領収書添付</span><span class="pill">自動保存</span>
+            </div>
+            <a class="slink" href="expense_input_form.html" target="_blank">モックを開く →</a>
+          </div>
+        </div>
+      </div>
+      <div class="scard">
+        <div class="scard-body">
+          <div class="sthumb">
+            <div class="thumb-in">
+              <div class="tbar green"></div>
+              <div class="tb">
+                <div class="tl" style="width:80%"></div>
+                <div class="tr2"><div class="tc" style="width:52px"></div><div class="tc" style="width:36px"></div></div>
+                <div class="tl" style="width:65%"></div>
+                <div class="tr2"><div class="tc" style="width:44px;background:#9FE1CB"></div><div class="tc" style="width:44px"></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="sinfo">
+            <div class="sinfo-step">STEP 2 — 伊藤（経理担当）</div>
+            <div class="sinfo-title">経理チェック・突き合わせ画面</div>
+            <div class="sinfo-desc">申請金額と領収書金額を1行ずつ照合。領収書未添付・差異はドットで即視認できます。全件確認済みにならないと月次確定ボタンが解除されない設計。</div>
+            <div class="pills">
+              <span class="pill">金額突き合わせ</span><span class="pill">確認進捗バー</span><span class="pill">月次確定ロック</span><span class="pill">経理メモ</span><span class="pill">CSV出力（予定）</span>
+            </div>
+            <a class="slink" href="accounting_final_check.html" target="_blank">モックを開く →</a>
+          </div>
+        </div>
+      </div>
+      <div class="scard">
+        <div class="scard-body">
+          <div class="sthumb">
+            <div class="thumb-in">
+              <div class="tbar amber"></div>
+              <div class="tb">
+                <div class="tl" style="width:80%"></div>
+                <div class="tr2"><div class="tc" style="width:40px"></div><div class="tc" style="width:40px"></div><div class="tc" style="width:34px"></div></div>
+                <div class="tl" style="width:70%"></div>
+                <div class="tr2"><div class="tc" style="width:56px;background:#9FE1CB"></div><div class="tc" style="width:48px;background:#F7C1C1"></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="sinfo">
+            <div class="sinfo-step">STEP 3 — 三田（マネージャー）</div>
+            <div class="sinfo-title">マネージャー最終承認画面</div>
+            <div class="sinfo-desc">経理チェック済みの申請一覧をステータス別に表示。ワンクリックで承認・差し戻しが可能。差し戻し時は理由を入力して申請者へ通知します。</div>
+            <div class="pills">
+              <span class="pill">ワンクリック承認</span><span class="pill">差し戻し理由入力</span><span class="pill">一括承認</span><span class="pill">ステータス絞り込み</span>
+            </div>
+            <a class="slink" href="manager_approval.html" target="_blank">モックを開く →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 倉野さんとのルール -->
+<div class="sec" id="rules">
+  <div class="sec-label">今後のルール整備</div>
+  <h2>小学館不動産さまとの確認事項</h2>
+  <p class="lead">改善にあわせて、貴社とのフォーマット・確認ルールも下記の通り整備していきたいと考えております。引き続きご意見・ご確認をいただけますと幸いです。</p>
+  <div class="dgrid">
+    <div class="dc">
+      <div class="dc-lbl">報告フォーマット</div>
+      <div class="dc-title">フォーマットの統一・更新</div>
+      <div class="dc-desc">より作業しやすい内容に統一し、項目を更新します。年度変わりの更新タイミングも都度共有します。</div>
+    </div>
+    <div class="dc">
+      <div class="dc-lbl">定期確認会</div>
+      <div class="dc-title">月次または四半期ごとの数字確認</div>
+      <div class="dc-desc">月次または四半期ごとに数字の突き合わせ確認会を設け、認識の齟齬を防ぎます。</div>
+    </div>
+    <div class="dc">
+      <div class="dc-lbl">ルールの明文化</div>
+      <div class="dc-title">定義・申告ルールの明記</div>
+      <div class="dc-desc">支出漏れ発生時は1ヶ月以内に申告するなど、双方の認識を揃えたルールを文書化します。</div>
+    </div>
+  </div>
+</div>
+
+<!-- CHAPTER 2 DIVIDER -->
+<div style="background:var(--surface);border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border);padding:18px 32px;">
+  <div style="max-width:720px;margin:0 auto;display:flex;align-items:center;gap:14px;">
+    <div style="width:28px;height:28px;border-radius:50%;background:var(--blue-lt);color:var(--blue-dk);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0;">2</div>
+    <div>
+      <div style="font-size:11px;font-weight:500;letter-spacing:0.07em;color:var(--text3);margin-bottom:2px;">第二章</div>
+      <div style="font-size:16px;font-weight:500;color:var(--text);">支出先のコンパクト化・管理強化</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2-1 取引先の整理 -->
+<div class="sec-bg" id="compact">
+  <div class="sec">
+    <div class="sec-label">2-1. 取引先の整理</div>
+    <h2>支出先を統合・整理し、管理しやすい規模へ</h2>
+    <p class="lead">これまで支出先が分散・重複しており、月次集計の際に見落としや二重計上のリスクが生じていました。支出先を精査・統合し、管理しやすい規模に絞り込みます。</p>
+
+    <svg viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif">
+      <!-- Before -->
+      <text x="130" y="22" text-anchor="middle" font-size="11" font-weight="500" fill="#888780">これまで（分散）</text>
+      <!-- many nodes -->
+      <circle cx="40"  cy="100" r="22" fill="#f1efea" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>
+      <text x="40"  cy="104" text-anchor="middle" font-size="9" fill="#5f5e5a" dominant-baseline="middle">業者A</text>
+      <circle cx="90"  cy="60"  r="22" fill="#f1efea" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>
+      <text x="90"  cy="60"  text-anchor="middle" font-size="9" fill="#5f5e5a" dominant-baseline="middle">業者B</text>
+      <circle cx="90"  cy="140" r="22" fill="#f1efea" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>
+      <text x="90"  cy="140" text-anchor="middle" font-size="9" fill="#5f5e5a" dominant-baseline="middle">業者C</text>
+      <circle cx="150" cy="44"  r="22" fill="#f1efea" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>
+      <text x="150" cy="44"  text-anchor="middle" font-size="9" fill="#5f5e5a" dominant-baseline="middle">業者D</text>
+      <circle cx="155" cy="100" r="22" fill="#f1efea" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>
+      <text x="155" cy="100" text-anchor="middle" font-size="9" fill="#5f5e5a" dominant-baseline="middle">業者E</text>
+      <circle cx="145" cy="158" r="22" fill="#f1efea" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>
+      <text x="145" cy="158" text-anchor="middle" font-size="9" fill="#5f5e5a" dominant-baseline="middle">業者F</text>
+      <circle cx="205" cy="72"  r="18" fill="#FAEEDA" stroke="#EF9F27" stroke-width="0.5"/>
+      <text x="205" cy="72"  text-anchor="middle" font-size="9" fill="#633806" dominant-baseline="middle">重複?</text>
+      <circle cx="205" cy="130" r="18" fill="#FAEEDA" stroke="#EF9F27" stroke-width="0.5"/>
+      <text x="205" cy="130" text-anchor="middle" font-size="9" fill="#633806" dominant-baseline="middle">重複?</text>
+
+      <!-- Arrow -->
+      <text x="280" y="106" text-anchor="middle" font-size="26" fill="#888780">→</text>
+      <text x="280" y="124" text-anchor="middle" font-size="10" fill="#888780">統合・整理</text>
+
+      <!-- After -->
+      <text x="490" y="22" text-anchor="middle" font-size="11" font-weight="500" fill="#0F6E56">今後（整理済み）</text>
+      <circle cx="390" cy="80"  r="26" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="1"/>
+      <text x="390" cy="80"  text-anchor="middle" font-size="9" fill="#085041" dominant-baseline="middle">楽天TV</text>
+      <circle cx="390" cy="140" r="26" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="1"/>
+      <text x="390" cy="140" text-anchor="middle" font-size="9" fill="#085041" dominant-baseline="middle">清掃A</text>
+      <circle cx="470" cy="60"  r="26" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="1"/>
+      <text x="470" cy="60"  text-anchor="middle" font-size="9" fill="#085041" dominant-baseline="middle">oyado</text>
+      <circle cx="470" cy="120" r="26" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="1"/>
+      <text x="470" cy="120" text-anchor="middle" font-size="9" fill="#085041" dominant-baseline="middle">設備B</text>
+      <circle cx="470" cy="175" r="22" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="1"/>
+      <text x="470" cy="175" text-anchor="middle" font-size="9" fill="#085041" dominant-baseline="middle">NTT</text>
+      <circle cx="555" cy="90"  r="26" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="1"/>
+      <text x="555" cy="90"  text-anchor="middle" font-size="9" fill="#085041" dominant-baseline="middle">アスクル</text>
+      <circle cx="555" cy="152" r="26" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="1"/>
+      <text x="555" cy="152" text-anchor="middle" font-size="9" fill="#085041" dominant-baseline="middle">修繕C</text>
+      <text x="635" cy="100" text-anchor="middle" font-size="10" fill="#0F6E56" dominant-baseline="middle">管理</text>
+      <text x="635" cy="114" text-anchor="middle" font-size="10" fill="#0F6E56" dominant-baseline="middle">しやすい</text>
+    </svg>
+  </div>
+</div>
+
+<!-- 2-2 カテゴリ分類 -->
+<div class="sec" id="category">
+  <div class="sec-label">2-2. カテゴリ分類</div>
+  <h2>支出を種別ごとに分類し、計上先を可視化</h2>
+  <p class="lead">支出を明確なカテゴリに分類することで、どこに何が計上されるかを誰が見ても把握できる状態にします。カテゴリはシステム上で固定化し、入力時に選択する形式とします。</p>
+
+  <svg viewBox="0 0 680 210" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif">
+    <!-- 中央ラベル -->
+    <rect x="270" y="80" width="140" height="50" rx="8" fill="#E6F1FB" stroke="#B5D4F4" stroke-width="1"/>
+    <text x="340" y="101" text-anchor="middle" font-size="11" font-weight="500" fill="#0C447C" dominant-baseline="middle">すべての支出</text>
+    <text x="340" y="118" text-anchor="middle" font-size="10" fill="#185FA5" dominant-baseline="middle">カテゴリで分類</text>
+
+    <!-- 放射カテゴリ -->
+    <!-- OTA手数料 -->
+    <line x1="270" y1="95" x2="165" y2="48" stroke="rgba(0,0,0,0.12)" stroke-width="1" stroke-dasharray="4,3"/>
+    <rect x="60" y="28" width="100" height="40" rx="6" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="0.5"/>
+    <text x="110" y="44" text-anchor="middle" font-size="10" font-weight="500" fill="#085041" dominant-baseline="middle">OTA手数料</text>
+    <text x="110" y="58" text-anchor="middle" font-size="9" fill="#0F6E56" dominant-baseline="middle">楽天・oyado 等</text>
+
+    <!-- 清掃費 -->
+    <line x1="270" y1="100" x2="165" y2="105" stroke="rgba(0,0,0,0.12)" stroke-width="1" stroke-dasharray="4,3"/>
+    <rect x="60" y="85" width="100" height="40" rx="6" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="0.5"/>
+    <text x="110" y="101" text-anchor="middle" font-size="10" font-weight="500" fill="#085041" dominant-baseline="middle">清掃費</text>
+    <text x="110" y="115" text-anchor="middle" font-size="9" fill="#0F6E56" dominant-baseline="middle">定期・スポット</text>
+
+    <!-- 修繕費 -->
+    <line x1="270" y1="118" x2="165" y2="162" stroke="rgba(0,0,0,0.12)" stroke-width="1" stroke-dasharray="4,3"/>
+    <rect x="60" y="142" width="100" height="40" rx="6" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="0.5"/>
+    <text x="110" y="158" text-anchor="middle" font-size="10" font-weight="500" fill="#085041" dominant-baseline="middle">修繕費</text>
+    <text x="110" y="172" text-anchor="middle" font-size="9" fill="#0F6E56" dominant-baseline="middle">設備・建物</text>
+
+    <!-- 備品・消耗品 -->
+    <line x1="410" y1="95" x2="515" y2="48" stroke="rgba(0,0,0,0.12)" stroke-width="1" stroke-dasharray="4,3"/>
+    <rect x="520" y="28" width="110" height="40" rx="6" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="0.5"/>
+    <text x="575" y="44" text-anchor="middle" font-size="10" font-weight="500" fill="#085041" dominant-baseline="middle">備品・消耗品</text>
+    <text x="575" y="58" text-anchor="middle" font-size="9" fill="#0F6E56" dominant-baseline="middle">アメニティ 等</text>
+
+    <!-- 通信費 -->
+    <line x1="410" y1="105" x2="515" y2="105" stroke="rgba(0,0,0,0.12)" stroke-width="1" stroke-dasharray="4,3"/>
+    <rect x="520" y="85" width="110" height="40" rx="6" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="0.5"/>
+    <text x="575" y="101" text-anchor="middle" font-size="10" font-weight="500" fill="#085041" dominant-baseline="middle">通信費</text>
+    <text x="575" y="115" text-anchor="middle" font-size="9" fill="#0F6E56" dominant-baseline="middle">Wi-Fi・回線</text>
+
+    <!-- その他 -->
+    <line x1="410" y1="118" x2="515" y2="162" stroke="rgba(0,0,0,0.12)" stroke-width="1" stroke-dasharray="4,3"/>
+    <rect x="520" y="142" width="110" height="40" rx="6" fill="#f7f7f5" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>
+    <text x="575" y="158" text-anchor="middle" font-size="10" font-weight="500" fill="#5f5e5a" dominant-baseline="middle">その他</text>
+    <text x="575" y="172" text-anchor="middle" font-size="9" fill="#888780" dominant-baseline="middle">都度確認</text>
+  </svg>
+</div>
+
+<!-- 2-3 定期棚卸し -->
+<div class="sec-bg" id="inventory">
+  <div class="sec">
+    <div class="sec-label">2-3. 定期棚卸し</div>
+    <h2>四半期ごとに支出先を棚卸し、不要な取引先を整理</h2>
+    <p class="lead">一度整理した支出先も、時間の経過とともに不要な取引先が増えていく傾向があります。四半期ごとに棚卸しを実施し、継続的にコンパクトな状態を維持します。</p>
+
+    <svg viewBox="0 0 680 168" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif">
+      <!-- Q1 -->
+      <rect x="20"  y="40" width="130" height="88" rx="8" fill="#E6F1FB" stroke="#B5D4F4" stroke-width="0.5"/>
+      <text x="85"  y="30" text-anchor="middle" font-size="11" font-weight="500" fill="#185FA5">Q1（1月〜3月）</text>
+      <text x="85"  y="72" text-anchor="middle" font-size="10" fill="#0C447C" dominant-baseline="middle">支出先リスト</text>
+      <text x="85"  y="88" text-anchor="middle" font-size="10" fill="#0C447C" dominant-baseline="middle">全件確認</text>
+      <text x="85"  y="104" text-anchor="middle" font-size="9" fill="#185FA5" dominant-baseline="middle">伊藤 ＋ 三田</text>
+
+      <text x="178" y="88" text-anchor="middle" font-size="20" fill="#888780" dominant-baseline="middle">→</text>
+
+      <!-- Q2 -->
+      <rect x="195" y="40" width="130" height="88" rx="8" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="0.5"/>
+      <text x="260" y="30" text-anchor="middle" font-size="11" font-weight="500" fill="#0F6E56">Q2（4月〜6月）</text>
+      <text x="260" y="72" text-anchor="middle" font-size="10" fill="#085041" dominant-baseline="middle">不要取引先</text>
+      <text x="260" y="88" text-anchor="middle" font-size="10" fill="#085041" dominant-baseline="middle">削除・統合</text>
+      <text x="260" y="104" text-anchor="middle" font-size="9" fill="#0F6E56" dominant-baseline="middle">伊藤 ＋ 三田</text>
+
+      <text x="353" y="88" text-anchor="middle" font-size="20" fill="#888780" dominant-baseline="middle">→</text>
+
+      <!-- Q3 -->
+      <rect x="370" y="40" width="130" height="88" rx="8" fill="#E6F1FB" stroke="#B5D4F4" stroke-width="0.5"/>
+      <text x="435" y="30" text-anchor="middle" font-size="11" font-weight="500" fill="#185FA5">Q3（7月〜9月）</text>
+      <text x="435" y="72" text-anchor="middle" font-size="10" fill="#0C447C" dominant-baseline="middle">カテゴリ分類</text>
+      <text x="435" y="88" text-anchor="middle" font-size="10" fill="#0C447C" dominant-baseline="middle">再確認</text>
+      <text x="435" y="104" text-anchor="middle" font-size="9" fill="#185FA5" dominant-baseline="middle">伊藤 ＋ 三田</text>
+
+      <text x="528" y="88" text-anchor="middle" font-size="20" fill="#888780" dominant-baseline="middle">→</text>
+
+      <!-- Q4 -->
+      <rect x="545" y="40" width="115" height="88" rx="8" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="0.5"/>
+      <text x="602" y="30" text-anchor="middle" font-size="11" font-weight="500" fill="#0F6E56">Q4（10月〜12月）</text>
+      <text x="602" y="72" text-anchor="middle" font-size="10" fill="#085041" dominant-baseline="middle">年次まとめ</text>
+      <text x="602" y="88" text-anchor="middle" font-size="10" fill="#085041" dominant-baseline="middle">翌年計画へ</text>
+      <text x="602" y="104" text-anchor="middle" font-size="9" fill="#0F6E56" dominant-baseline="middle">伊藤 ＋ 三田</text>
+
+      <!-- 循環矢印ラベル -->
+      <text x="340" y="155" text-anchor="middle" font-size="11" fill="#888780">四半期ごとに繰り返し、支出先を常にコンパクトに維持</text>
+    </svg>
+  </div>
+</div>
+
+<footer>
+  dot — 収支報告 改善に向けた取り組み &nbsp;|&nbsp; 2026年4月
+</footer>
+
+</body>
+</html>

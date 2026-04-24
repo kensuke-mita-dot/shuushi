@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>収支管理システム — 支出入力フォーム</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f7f7f5;
+    --bg-tertiary: #f0efeb;
+    --bg-info: #e6f1fb;
+    --bg-success: #e1f5ee;
+    --bg-warning: #faeeda;
+    --text-primary: #1a1a18;
+    --text-secondary: #5f5e5a;
+    --text-tertiary: #888780;
+    --text-info: #185fa5;
+    --text-success: #0f6e56;
+    --text-warning: #633806;
+    --border: rgba(0,0,0,0.12);
+    --border-md: rgba(0,0,0,0.22);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --blue-600: #185fa5;
+    --blue-700: #0c447c;
+    --green-600: #1d9e75;
+    --green-700: #0f6e56;
+    --red-600: #a32d2d;
+  }
+
+  body {
+    font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .app {
+    max-width: 680px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--bg-tertiary);
+  }
+
+  /* Topbar */
+  .topbar {
+    background: var(--bg-primary);
+    border-bottom: 0.5px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar-logo {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .topbar-logo .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green-600);
+    flex-shrink: 0;
+  }
+  .topbar-user {
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  /* Progress Steps */
+  .progress-bar {
+    background: var(--bg-primary);
+    border-bottom: 0.5px solid var(--border);
+    padding: 12px 20px;
+  }
+  .steps {
+    display: flex;
+    align-items: center;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .step-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .step-label { font-size: 12px; }
+  .step.done .step-num  { background: var(--green-600); color: #fff; }
+  .step.active .step-num { background: var(--blue-600); color: #fff; }
+  .step.todo .step-num  { background: var(--bg-secondary); color: var(--text-tertiary); border: 0.5px solid var(--border); }
+  .step.done .step-label  { color: var(--green-700); }
+  .step.active .step-label { color: var(--blue-600); font-weight: 500; }
+  .step.todo .step-label  { color: var(--text-tertiary); }
+  .step-line {
+    flex: 1;
+    height: 0.5px;
+    background: var(--border);
+    min-width: 16px;
+    max-width: 32px;
+    margin: 0 4px;
+  }
+
+  /* Main content */
+  .main { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+  /* Card */
+  .card {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .badge-month {
+    font-size: 11px;
+    color: var(--text-info);
+    background: var(--bg-info);
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  /* Form elements */
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .req { color: var(--red-600); font-size: 11px; }
+
+  input[type=text],
+  input[type=number],
+  input[type=date],
+  select,
+  textarea {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 14px;
+    border: 0.5px solid var(--border-md);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--blue-600);
+    box-shadow: 0 0 0 2px rgba(24, 95, 165, 0.12);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+  }
+  textarea { resize: vertical; min-height: 64px; line-height: 1.6; }
+  input[readonly] {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: default;
+  }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Category */
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .cat-btn {
+    padding: 10px 6px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 1.3;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .cat-btn:hover { border-color: var(--border-md); color: var(--text-primary); background: var(--bg-secondary); }
+  .cat-btn.selected { border-color: var(--blue-600); background: var(--bg-info); color: var(--blue-600); font-weight: 500; }
+  .cat-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+
+  /* Sub tags */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 0.5px solid var(--border);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    font-family: inherit;
+    transition: all 0.12s;
+  }
+  .tag:hover { border-color: var(--border-md); color: var(--text-primary); }
+  .tag.active { background: var(--bg-success); border-color: var(--green-600); color: var(--green-700); font-weight: 500; }
+
+  /* Amount */
+  .amount-row { display: flex; align-items: center; gap: 8px; }
+  .amount-row input { flex: 1; }
+  .yen { font-size: 16px; color: var(--text-secondary); font-weight: 500; flex-shrink: 0; }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 0.5px dashed var(--border-md);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 13px;
+    background: var(--bg-secondary);
+    transition: all 0.15s;
+  }
+  .upload-zone:hover { border-color: var(--blue-600); color: var(--blue-600); background: var(--bg-info); }
+  .upload-icon { font-size: 22px; margin-bottom: 6px; }
+  .upload-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+
+  /* Checklist */
+  .checklist { display: flex; flex-direction: column; gap: 10px; }
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    line-height: 1.5;
+  }
+  .check-item input[type=checkbox] {
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    accent-color: var(--green-600);
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .check-item.checked { color: var(--text-primary); }
+
+  /* Approval flow */
+  .flow-wrap {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-top: 8px;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .flow-step { text-align: center; }
+  .flow-node {
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .flow-node.you    { background: var(--bg-info); color: var(--text-info); }
+  .flow-node.mgr    { background: var(--bg-success); color: var(--text-success); }
+  .flow-node.acct   { background: var(--bg-warning); color: var(--text-warning); }
+  .flow-node.done   { background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border); }
+  .flow-label { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+  .flow-arrow { color: var(--text-tertiary); font-size: 13px; }
+
+  /* Submit */
+  .submit-area { padding-bottom: 32px; display: flex; flex-direction: column; gap: 8px; }
+  .btn-submit {
+    width: 100%;
+    padding: 13px;
+    background: var(--blue-600);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 0.01em;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-submit:hover { background: var(--blue-700); }
+  .btn-draft {
+    width: 100%;
+    padding: 11px;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border: 0.5px solid var(--border-md);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-draft:hover { background: var(--bg-secondary); }
+  .autosave-notice {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green-600);
+    flex-shrink: 0;
+  }
+  .flow-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <span class="dot"></span>
+      収支管理システム
+    </div>
+    <div class="topbar-user">鶴田 / 亥川 ▾</div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-bar">
+    <div class="steps">
+      <div class="step active">
+        <div class="step-num">1</div>
+        <span class="step-label">支出入力</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step todo">
+        <div class="step-num">2</div>
+        <span class="step-label">経理チェック</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step todo">
+        <div class="step-num">3</div>
+        <span class="step-label">マネージャー・三田承認</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step todo">
+        <div class="step-num">4</div>
+        <span class="step-label">報告確定</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- 基本情報 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">基本情報</span>
+        <span class="badge-month">2026年 5月分</span>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <div class="label">発生日 <span class="req">*</span></div>
+          <input type="date" value="2026-04-24">
+        </div>
+        <div class="field">
+          <div class="label">報告者名 <span class="req">*</span></div>
+          <input type="text" value="鶴田 / 亥川" readonly>
+        </div>
+      </div>
+    </div>
+
+    <!-- カテゴリ -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">支出カテゴリ <span class="req">*</span></span>
+      </div>
+      <div class="category-grid">
+        <button class="cat-btn" onclick="selectCat(this)">
+          <span class="cat-icon">📡</span>OTA手数料
+        </button>
+        <button class="cat-btn selected" onclick="selectCat(this)">
+          <span class="cat-icon">📦</span>備品・消耗品
+        </button>
+        <button class="cat-btn" onclick="selectCat(this)">
+          <span class="cat-icon">🧹</span>清掃費
+        </button>
+        <button class="cat-btn" onclick="selectCat(this)">
+          <span class="cat-icon">🔧</span>修繕費
+        </button>
+        <button class="cat-btn" onclick="selectCat(this)">
+          <span class="cat-icon">📶</span>通信費
+        </button>
+        <button class="cat-btn" onclick="selectCat(this)">
+          <span class="cat-icon">···</span>その他
+        </button>
+      </div>
+      <div class="tag-row">
+        <button class="tag active" onclick="toggleTag(this)">アメニティ</button>
+        <button class="tag active" onclick="toggleTag(this)">日用品</button>
+        <button class="tag" onclick="toggleTag(this)">リネン類</button>
+        <button class="tag" onclick="toggleTag(this)">事務用品</button>
+        <button class="tag" onclick="toggleTag(this)">+ 追加</button>
+      </div>
+    </div>
+
+    <!-- 金額・支出先 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">金額・支出先</span>
+      </div>
+      <div class="field">
+        <div class="label">金額（税込） <span class="req">*</span></div>
+        <div class="amount-row">
+          <span class="yen">¥</span>
+          <input type="number" value="12800" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="field">
+        <div class="label">支出先・取引先 <span class="req">*</span></div>
+        <select>
+          <option>アスクル（事務用品）</option>
+          <option>楽天トラベル</option>
+          <option>oyado</option>
+          <option>地元清掃業者A</option>
+          <option>その他（手入力）</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="label">摘要・備考</div>
+        <textarea placeholder="例：4月分アメニティ補充。通常より多めに発注（GW対応）">4月分アメニティ補充。GW需要に備えた増量発注。</textarea>
+      </div>
+    </div>
+
+    <!-- 領収書 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">領収書・証憑</span>
+      </div>
+      <div class="upload-zone" onclick="this.style.borderColor='#185fa5'">
+        <div class="upload-icon">📎</div>
+        写真を撮影 / ファイルを選択
+        <div class="upload-hint">JPG・PDF・PNG 対応</div>
+      </div>
+    </div>
+
+    <!-- チェックリスト -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">提出前チェックリスト</span>
+      </div>
+      <div class="checklist">
+        <label class="check-item checked">
+          <input type="checkbox" checked onchange="toggleCheck(this)">
+          カテゴリは正確に選択されている
+        </label>
+        <label class="check-item checked">
+          <input type="checkbox" checked onchange="toggleCheck(this)">
+          領収書・証憑を添付した
+        </label>
+        <label class="check-item">
+          <input type="checkbox" onchange="toggleCheck(this)">
+          金額は税込で入力した
+        </label>
+        <label class="check-item">
+          <input type="checkbox" onchange="toggleCheck(this)">
+          支出先を正確に選択した
+        </label>
+        <label class="check-item">
+          <input type="checkbox" onchange="toggleCheck(this)">
+          摘要に目的・背景を記入した
+        </label>
+      </div>
+    </div>
+
+    <!-- 承認フロー -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">承認フロー</span>
+      </div>
+      <div class="flow-desc">提出後、以下の順で確認・承認されます</div>
+      <div class="flow-wrap">
+        <div class="flow-row">
+          <div class="flow-step">
+            <div class="flow-node you">鶴田 / 亥川</div>
+            <div class="flow-label">入力・提出</div>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <div class="flow-node mgr">三田（MG）</div>
+            <div class="flow-label">内容確認・承認</div>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <div class="flow-node acct">経理・伊藤</div>
+            <div class="flow-label">最終チェック</div>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <div class="flow-node done">完了</div>
+            <div class="flow-label">報告確定</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-area">
+      <button class="btn-submit" onclick="handleSubmit()">
+        経理へ提出する →
+      </button>
+      <button class="btn-draft">下書き保存</button>
+      <div class="autosave-notice">
+        <span class="status-dot"></span>
+        自動保存中 · 入力中のデータは保持されます
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+  function selectCat(el) {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function toggleTag(el) {
+    el.classList.toggle('active');
+  }
+
+  function toggleCheck(input) {
+    const label = input.closest('.check-item');
+    if (input.checked) {
+      label.classList.add('checked');
+    } else {
+      label.classList.remove('checked');
+    }
+  }
+
+  function handleSubmit() {
+    const checkboxes = document.querySelectorAll('.checklist input[type=checkbox]');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    if (!allChecked) {
+      alert('提出前チェックリストをすべて確認・チェックしてください。');
+      return;
+    }
+    alert('マネージャー・三田へ提出しました。承認をお待ちください。');
+  }
+</script>
+
+</body>
+</html>

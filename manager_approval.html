@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>収支管理システム — マネージャー・三田承認画面（三田）</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f7f7f5;
+    --bg-tertiary: #f0efeb;
+    --bg-info: #e6f1fb;
+    --bg-success: #e1f5ee;
+    --bg-warning: #faeeda;
+    --bg-danger: #fcebeb;
+    --text-primary: #1a1a18;
+    --text-secondary: #5f5e5a;
+    --text-tertiary: #888780;
+    --border: rgba(0,0,0,0.12);
+    --border-md: rgba(0,0,0,0.22);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --green-400: #1D9E75;
+    --green-600: #0F6E56;
+    --green-700: #085041;
+    --blue-600: #185FA5;
+    --blue-700: #0C447C;
+    --amber-600: #854F0B;
+    --amber-700: #633806;
+    --red-400: #E24B4A;
+    --red-600: #A32D2D;
+    --red-700: #791F1F;
+  }
+
+  body {
+    font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .app { max-width: 680px; margin: 0 auto; min-height: 100vh; }
+
+  .topbar {
+    background: var(--bg-primary);
+    border-bottom: 0.5px solid var(--border);
+    padding: 13px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar-logo { font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green-400); flex-shrink: 0; }
+  .topbar-role {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    padding: 3px 10px;
+    border-radius: 4px;
+  }
+
+  .summary-bar {
+    background: var(--bg-primary);
+    border-bottom: 0.5px solid var(--border);
+    padding: 14px 20px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .stat { text-align: center; }
+  .stat-num { font-size: 22px; font-weight: 500; }
+  .stat-num.warn { color: var(--amber-600); }
+  .stat-num.ok   { color: var(--green-600); }
+  .stat-num.ng   { color: var(--red-600); }
+  .stat-label { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+  .main { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+  .filter-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .filter-btn {
+    font-size: 12px;
+    padding: 5px 13px;
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.12s;
+  }
+  .filter-btn:hover { border-color: var(--border-md); color: var(--text-primary); }
+  .filter-btn.active { background: var(--bg-info); border-color: var(--blue-600); color: var(--blue-700); font-weight: 500; }
+  .filter-btn.bulk { background: var(--bg-success); border-color: var(--green-400); color: var(--green-700); font-weight: 500; }
+
+  .section-label { font-size: 11px; color: var(--text-tertiary); font-weight: 500; letter-spacing: 0.04em; padding: 0 2px; }
+
+  .req-card {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 10px;
+    transition: opacity 0.2s;
+  }
+  .req-card.pending  { border-left: 3px solid #EF9F27; }
+  .req-card.approved { border-left: 3px solid var(--green-400); opacity: 0.75; }
+  .req-card.rejected { border-left: 3px solid var(--red-400); opacity: 0.75; }
+
+  .card-main { padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 500; flex-shrink: 0;
+  }
+  .av-a { background: var(--bg-info); color: var(--blue-700); }
+  .av-b { background: var(--bg-success); color: var(--green-700); }
+  .av-c { background: var(--bg-warning); color: var(--amber-700); }
+  .av-d { background: #FAECE7; color: #712B13; }
+
+  .card-info { flex: 1; min-width: 0; }
+  .card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .card-name { font-size: 13px; font-weight: 500; }
+  .card-date { font-size: 11px; color: var(--text-tertiary); }
+
+  .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+  .status-badge.pending  { background: var(--bg-warning); color: var(--amber-700); }
+  .status-badge.approved { background: var(--bg-success); color: var(--green-700); }
+  .status-badge.rejected { background: var(--bg-danger); color: var(--red-700); }
+
+  .card-desc { font-size: 13px; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .cat-pill { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--bg-secondary); color: var(--text-secondary); }
+  .card-amount { font-size: 14px; font-weight: 500; }
+  .card-memo { font-size: 12px; color: var(--text-tertiary); }
+
+  .card-actions {
+    border-top: 0.5px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-approve {
+    flex: 1; padding: 8px 0;
+    background: var(--green-400); color: #fff;
+    border: none; border-radius: var(--radius-md);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    font-family: inherit; transition: background 0.12s;
+  }
+  .btn-approve:hover { background: var(--green-600); }
+
+  .btn-reject {
+    flex: 1; padding: 8px 0;
+    background: var(--bg-primary); color: var(--red-600);
+    border: 0.5px solid #F09595; border-radius: var(--radius-md);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    font-family: inherit; transition: all 0.12s;
+  }
+  .btn-reject:hover { background: var(--bg-danger); }
+
+  .btn-detail {
+    padding: 8px 14px;
+    background: var(--bg-secondary); color: var(--text-secondary);
+    border: 0.5px solid var(--border); border-radius: var(--radius-md);
+    font-size: 12px; cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  .btn-detail:hover { color: var(--text-primary); }
+
+  .done-msg { flex: 1; text-align: center; font-size: 13px; color: var(--text-tertiary); padding: 4px 0; }
+
+  .reject-panel {
+    display: none;
+    background: var(--bg-secondary);
+    border-top: 0.5px solid var(--border);
+    padding: 12px 16px;
+  }
+  .reject-hint { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  .reject-panel textarea {
+    width: 100%; font-size: 13px; padding: 8px 10px;
+    border: 0.5px solid var(--border-md); border-radius: var(--radius-md);
+    background: var(--bg-primary); color: var(--text-primary);
+    font-family: inherit; resize: none; min-height: 56px; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .reject-panel textarea:focus { border-color: var(--red-400); box-shadow: 0 0 0 2px rgba(226,75,74,0.1); }
+
+  .reject-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .btn-send-reject {
+    padding: 7px 16px; background: var(--red-400); color: #fff;
+    border: none; border-radius: var(--radius-md);
+    font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit;
+    transition: background 0.12s;
+  }
+  .btn-send-reject:hover { background: var(--red-600); }
+  .btn-cancel-reject {
+    padding: 7px 12px; background: var(--bg-primary); color: var(--text-secondary);
+    border: 0.5px solid var(--border); border-radius: var(--radius-md);
+    font-size: 12px; cursor: pointer; font-family: inherit;
+  }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-tertiary); font-size: 14px; }
+  .empty-icon { font-size: 32px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="topbar-logo"><span class="dot"></span>収支管理システム</div>
+    <div class="topbar-role">マネージャー・三田承認（三田）</div>
+  </div>
+
+  <div class="summary-bar">
+    <div class="stat">
+      <div class="stat-num warn" id="cnt-pending">3</div>
+      <div class="stat-label">承認待ち</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num ok" id="cnt-approved">1</div>
+      <div class="stat-label">承認済み（今月）</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num ng" id="cnt-rejected">1</div>
+      <div class="stat-label">差し戻し</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="total-amount">¥22,800</div>
+      <div class="stat-label">今月 承認総額</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="setFilter('all', this)">すべて</button>
+      <button class="filter-btn" onclick="setFilter('pending', this)">承認待ち</button>
+      <button class="filter-btn" onclick="setFilter('approved', this)">承認済み</button>
+      <button class="filter-btn" onclick="setFilter('rejected', this)">差し戻し</button>
+      <button class="filter-btn bulk" onclick="bulkApprove()">一括承認 →</button>
+    </div>
+
+    <div class="section-label">申請一覧</div>
+    <div id="cards-container"></div>
+  </div>
+
+</div>
+
+<script>
+  const items = [
+    { id:1, name:'鶴田 / 亥川', initials:'田花', av:'av-a', date:'2026-04-24', category:'備品・消耗品', sub:'アメニティ・日用品', desc:'4月分アメニティ補充（GW増量発注）', amount:12800, memo:'アスクル', status:'pending' },
+    { id:2, name:'山本 太郎', initials:'山太', av:'av-b', date:'2026-04-23', category:'OTA手数料', sub:'楽天トラベル', desc:'3月分 楽天トラベル手数料', amount:84000, memo:'楽天トラベル', status:'pending' },
+    { id:3, name:'佐藤 美咲', initials:'佐美', av:'av-c', date:'2026-04-22', category:'清掃費', sub:'定期清掃', desc:'4月第2週 客室清掃委託費', amount:31600, memo:'地元清掃業者A', status:'pending' },
+    { id:4, name:'中村 健',   initials:'中健', av:'av-d', date:'2026-04-20', category:'修繕費', sub:'設備修理', desc:'101号室 給湯器修理対応', amount:22800, memo:'設備業者B', status:'approved' },
+    { id:5, name:'鶴田 / 亥川', initials:'田花', av:'av-a', date:'2026-04-18', category:'通信費', sub:'Wi-Fi回線', desc:'共用部 Wi-Fi月額費用', amount:5600, memo:'NTT', status:'rejected' },
+  ];
+
+  let currentFilter = 'all';
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  function bulkApprove() {
+    const pending = items.filter(i => i.status === 'pending');
+    if (pending.length === 0) { alert('承認待ちの申請はありません。'); return; }
+    if (!confirm(pending.length + '件の申請をまとめて承認しますか？')) return;
+    pending.forEach(i => i.status = 'approved');
+    updateStats();
+    render();
+  }
+
+  function approve(id) {
+    const it = items.find(i => i.id === id);
+    if (it) { it.status = 'approved'; updateStats(); render(); }
+  }
+
+  function showRejectPanel(id) {
+    document.querySelectorAll('.reject-panel').forEach(p => p.style.display = 'none');
+    const p = document.getElementById('rp-' + id);
+    if (p) p.style.display = 'block';
+  }
+
+  function cancelReject(id) {
+    const p = document.getElementById('rp-' + id);
+    if (p) p.style.display = 'none';
+  }
+
+  function sendReject(id) {
+    const ta = document.getElementById('rt-' + id);
+    const reason = ta ? ta.value.trim() : '';
+    if (!reason) { alert('差し戻し理由を入力してください。'); ta && ta.focus(); return; }
+    const it = items.find(i => i.id === id);
+    if (it) { it.status = 'rejected'; updateStats(); render(); }
+  }
+
+  function updateStats() {
+    document.getElementById('cnt-pending').textContent  = items.filter(i => i.status === 'pending').length;
+    document.getElementById('cnt-approved').textContent = items.filter(i => i.status === 'approved').length;
+    document.getElementById('cnt-rejected').textContent = items.filter(i => i.status === 'rejected').length;
+    const total = items.filter(i => i.status === 'approved').reduce((s, i) => s + i.amount, 0);
+    document.getElementById('total-amount').textContent = '¥' + total.toLocaleString();
+  }
+
+  function render() {
+    const container = document.getElementById('cards-container');
+    const filtered = currentFilter === 'all' ? items : items.filter(i => i.status === currentFilter);
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div>該当する申請はありません</div>';
+      return;
+    }
+
+    const statusLabel = { pending:'承認待ち', approved:'承認済み', rejected:'差し戻し' };
+
+    container.innerHTML = filtered.map(it => {
+      const actions = it.status === 'pending'
+        ? `<button class="btn-approve" onclick="approve(${it.id})">承認する</button>
+           <button class="btn-reject" onclick="showRejectPanel(${it.id})">差し戻し</button>
+           <button class="btn-detail" onclick="alert('詳細画面は別途実装予定です')">詳細</button>`
+        : `<div class="done-msg">${it.status === 'approved' ? '✓ 承認済み' : '✕ 差し戻し済み'}</div>`;
+
+      return `
+        <div class="req-card ${it.status}" id="card-${it.id}">
+          <div class="card-main">
+            <div class="avatar ${it.av}">${it.initials}</div>
+            <div class="card-info">
+              <div class="card-top">
+                <span class="card-name">${it.name}</span>
+                <span class="card-date">${it.date}</span>
+                <span class="status-badge ${it.status}">${statusLabel[it.status]}</span>
+              </div>
+              <div class="card-desc">${it.desc}</div>
+              <div class="card-meta">
+                <span class="cat-pill">${it.category}</span>
+                <span class="cat-pill">${it.sub}</span>
+                <span class="card-amount">¥${it.amount.toLocaleString()}</span>
+                <span class="card-memo">${it.memo}</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-actions">${actions}</div>
+          <div class="reject-panel" id="rp-${it.id}">
+            <div class="reject-hint">差し戻し理由を入力してください（申請者に通知されます）</div>
+            <textarea id="rt-${it.id}" placeholder="例：領収書の添付が確認できません。再度添付のうえ提出してください。"></textarea>
+            <div class="reject-actions">
+              <button class="btn-send-reject" onclick="sendReject(${it.id})">差し戻しを送信</button>
+              <button class="btn-cancel-reject" onclick="cancelReject(${it.id})">キャンセル</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  render();
+</script>
+</body>
+</html>

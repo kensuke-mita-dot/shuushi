@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>収支管理システム — 経理チェック画面（伊藤）</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary:   #ffffff;
+    --bg-secondary: #f7f7f5;
+    --bg-tertiary:  #f0efeb;
+    --bg-success:   #e1f5ee;
+    --bg-warning:   #faeeda;
+    --text-primary:   #1a1a18;
+    --text-secondary: #5f5e5a;
+    --text-tertiary:  #888780;
+    --border:    rgba(0,0,0,0.12);
+    --border-md: rgba(0,0,0,0.22);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --green-400: #1D9E75;
+    --green-700: #085041;
+    --blue-600:  #185FA5;
+    --blue-700:  #0C447C;
+    --amber-600: #854F0B;
+    --amber-700: #633806;
+    --amber-border: #EF9F27;
+    --red-600:   #A32D2D;
+  }
+
+  body {
+    font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .app { max-width: 760px; margin: 0 auto; min-height: 100vh; }
+
+  /* Topbar */
+  .topbar {
+    background: var(--bg-primary);
+    border-bottom: 0.5px solid var(--border);
+    padding: 13px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .logo { font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .dot  { width: 8px; height: 8px; border-radius: 50%; background: var(--green-400); flex-shrink: 0; }
+  .role-tag { font-size: 12px; color: var(--text-secondary); background: var(--bg-secondary); padding: 3px 10px; border-radius: 4px; }
+
+  /* Month bar */
+  .month-bar {
+    background: var(--bg-primary);
+    border-bottom: 0.5px solid var(--border);
+    padding: 10px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .month-sel { font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .nav-btn { font-size: 18px; cursor: pointer; color: var(--text-tertiary); padding: 0 4px; background: none; border: none; font-family: inherit; line-height: 1; }
+  .nav-btn:hover { color: var(--text-primary); }
+  .export-btn {
+    font-size: 12px; padding: 5px 13px;
+    border: 0.5px solid var(--border-md); border-radius: var(--radius-md);
+    background: var(--bg-primary); color: var(--text-secondary);
+    cursor: pointer; font-family: inherit; transition: background 0.12s;
+  }
+  .export-btn:hover { background: var(--bg-secondary); }
+
+  /* Stats */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 14px 14px 0; }
+  .stat { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 11px 13px; }
+  .stat-lbl { font-size: 11px; color: var(--text-tertiary); margin-bottom: 3px; }
+  .stat-val { font-size: 20px; font-weight: 500; color: var(--text-primary); }
+  .stat-val.warn { color: var(--amber-600); }
+  .stat-val.ok   { color: var(--green-400); }
+  .stat-val.ng   { color: var(--red-600); }
+
+  /* Main layout */
+  .main { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* Alert / ok bar */
+  .alert-bar {
+    padding: 10px 14px;
+    background: var(--bg-warning); border: 0.5px solid var(--amber-border); border-radius: var(--radius-md);
+    font-size: 12px; color: var(--amber-700);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ok-bar {
+    padding: 10px 14px;
+    background: var(--bg-success); border: 0.5px solid var(--green-400); border-radius: var(--radius-md);
+    font-size: 13px; color: var(--green-700);
+    display: none; align-items: center; gap: 8px; font-weight: 500;
+  }
+
+  /* Progress card */
+  .prog-card {
+    background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 13px 16px;
+  }
+  .prog-head { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+  .prog-outer { height: 6px; background: var(--bg-secondary); border-radius: 4px; overflow: hidden; }
+  .prog-inner { height: 6px; background: var(--green-400); border-radius: 4px; transition: width 0.3s; }
+
+  /* Table card */
+  .tbl-card { background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .tbl-head-row {
+    padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .tbl-title { font-size: 13px; font-weight: 500; }
+  .tbl-hint  { font-size: 11px; color: var(--text-tertiary); }
+  .tbl-scroll { overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  th {
+    padding: 8px 11px; text-align: left; font-size: 11px; font-weight: 500;
+    color: var(--text-tertiary); background: var(--bg-secondary);
+    border-bottom: 0.5px solid var(--border); white-space: nowrap;
+  }
+  td { padding: 10px 11px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg-secondary); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .cat-pill { font-size: 11px; padding: 2px 7px; border-radius: 4px; background: var(--bg-secondary); color: var(--text-secondary); white-space: nowrap; }
+
+  .sdot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; flex-shrink: 0; }
+  .sdot-ok   { background: var(--green-400); }
+  .sdot-warn { background: var(--amber-border); }
+  .sdot-ng   { background: #E24B4A; }
+  .match-cell { display: flex; align-items: center; font-size: 12px; white-space: nowrap; }
+
+  .chk-sel {
+    font-size: 12px; padding: 3px 5px;
+    border: 0.5px solid var(--border-md); border-radius: 4px;
+    background: var(--bg-primary); color: var(--text-primary);
+    font-family: inherit; cursor: pointer; outline: none;
+    width: 100%; margin-bottom: 4px;
+    -webkit-appearance: none; appearance: none;
+  }
+  .chk-sel:focus { border-color: var(--blue-600); }
+
+  .memo-in {
+    font-size: 12px; padding: 3px 6px;
+    border: 0.5px solid var(--border-md); border-radius: 4px;
+    background: var(--bg-primary); color: var(--text-primary);
+    font-family: inherit; width: 100%; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .memo-in:focus { border-color: var(--blue-600); box-shadow: 0 0 0 2px rgba(24,95,165,0.1); }
+
+  .missing { color: var(--text-tertiary); }
+
+  /* Table footer */
+  .tbl-foot {
+    padding: 13px 16px; border-top: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  }
+  .total-blk { display: flex; align-items: baseline; gap: 8px; }
+  .total-lbl { font-size: 12px; color: var(--text-secondary); }
+  .total-num { font-size: 20px; font-weight: 500; }
+
+  .foot-btns { display: flex; gap: 8px; }
+  .btn-cmt {
+    padding: 8px 13px; background: var(--bg-primary); color: var(--text-secondary);
+    border: 0.5px solid var(--border-md); border-radius: var(--radius-md);
+    font-size: 13px; cursor: pointer; font-family: inherit; transition: background 0.12s;
+  }
+  .btn-cmt:hover { background: var(--bg-secondary); }
+  .btn-fix {
+    padding: 8px 18px; background: var(--blue-600); color: #fff;
+    border: none; border-radius: var(--radius-md);
+    font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;
+    transition: background 0.12s;
+  }
+  .btn-fix:hover { background: var(--blue-700); }
+  .btn-fix:disabled { background: var(--bg-secondary); color: var(--text-tertiary); cursor: default; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="logo"><span class="dot"></span>収支管理システム</div>
+    <div class="role-tag">経理チェック画面（伊藤）</div>
+  </div>
+
+  <div class="month-bar">
+    <div class="month-sel">
+      <button class="nav-btn" onclick="alert('前月表示（実装予定）')">&#8249;</button>
+      <span>2026年 4月</span>
+      <button class="nav-btn" onclick="alert('翌月表示（実装予定）')">&#8250;</button>
+    </div>
+    <button class="export-btn" onclick="alert('CSV出力機能は実装予定です')">CSV出力 ↓</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat"><div class="stat-lbl">確認待ち</div><div class="stat-val warn" id="s-pend">4</div></div>
+    <div class="stat"><div class="stat-lbl">確認済み</div><div class="stat-val ok"   id="s-done">1</div></div>
+    <div class="stat"><div class="stat-lbl">要差し戻し</div><div class="stat-val ng"   id="s-ng">0</div></div>
+    <div class="stat"><div class="stat-lbl">今月 合計</div><div class="stat-val"      id="s-total">¥156,800</div></div>
+  </div>
+
+  <div class="main">
+
+    <div class="alert-bar" id="alert-bar">
+      <span style="font-size:15px;flex-shrink:0">&#9888;</span>
+      確認が完了していない項目があります。全件チェック後に月次確定できます。
+    </div>
+    <div class="ok-bar" id="ok-bar">
+      &#10003; 今月分の最終確認が完了しました。小学館不動産・倉野さんへの報告が可能です。
+    </div>
+
+    <div class="prog-card">
+      <div class="prog-head">
+        <span>チェック進捗</span>
+        <span id="prog-txt">1 / 5 件</span>
+      </div>
+      <div class="prog-outer"><div class="prog-inner" id="prog-bar" style="width:20%"></div></div>
+    </div>
+
+    <div class="tbl-card">
+      <div class="tbl-head-row">
+        <span class="tbl-title">支出明細 — 突き合わせチェック</span>
+        <span class="tbl-hint">承認済み申請のみ表示</span>
+      </div>
+      <div class="tbl-scroll">
+        <table>
+          <colgroup>
+            <col style="width:68px">
+            <col style="width:150px">
+            <col style="width:84px">
+            <col style="width:96px">
+            <col style="width:96px">
+            <col style="width:96px">
+            <col style="width:130px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>日付</th>
+              <th>内容</th>
+              <th>カテゴリ</th>
+              <th class="num">申請金額</th>
+              <th class="num">領収書金額</th>
+              <th>突合</th>
+              <th>確認 / メモ</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="tbl-foot">
+        <div class="total-blk">
+          <span class="total-lbl">確認済み合計</span>
+          <span class="total-num" id="foot-tot">¥5,600</span>
+        </div>
+        <div class="foot-btns">
+          <button class="btn-cmt" onclick="alert('コメント機能は実装予定です')">コメント追加</button>
+          <button class="btn-fix" id="btn-fix" onclick="finalize()" disabled>月次確定する &#8594;</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  var rows = [
+    { id:1, date:'04/18', desc:'共用部 Wi-Fi月額費用',      cat:'通信費',      amt:5600,  rec:5600,  memo:'' },
+    { id:2, date:'04/20', desc:'101号室 給湯器修理対応',    cat:'修繕費',      amt:22800, rec:22800, memo:'' },
+    { id:3, date:'04/22', desc:'4月第2週 客室清掃委託費',   cat:'清掃費',      amt:31600, rec:0,     memo:'' },
+    { id:4, date:'04/23', desc:'3月分 楽天トラベル手数料',  cat:'OTA手数料',   amt:84000, rec:84000, memo:'' },
+    { id:5, date:'04/24', desc:'4月分アメニティ補充',        cat:'備品・消耗品', amt:12800, rec:0,     memo:'' },
+  ];
+
+  var checks = {};
+  rows.forEach(function(r) { checks[r.id] = 'unchecked'; });
+  checks[1] = 'ok';
+
+  function matchCell(r) {
+    if (r.rec === 0) return '<div class="match-cell"><span class="sdot sdot-warn"></span>領収書未添付</div>';
+    if (r.amt === r.rec) return '<div class="match-cell"><span class="sdot sdot-ok"></span>金額一致</div>';
+    return '<div class="match-cell"><span class="sdot sdot-ng"></span>差異あり</div>';
+  }
+
+  function render() {
+    var html = '';
+    rows.forEach(function(r) {
+      var cs = checks[r.id];
+      var recTxt = r.rec === 0
+        ? '<span class="missing">未添付</span>'
+        : '&yen;' + r.rec.toLocaleString();
+      html += '<tr>';
+      html += '<td style="color:var(--text-secondary);font-size:12px">' + r.date + '</td>';
+      html += '<td>' + r.desc + '</td>';
+      html += '<td><span class="cat-pill">' + r.cat + '</span></td>';
+      html += '<td class="num">&yen;' + r.amt.toLocaleString() + '</td>';
+      html += '<td class="num">' + recTxt + '</td>';
+      html += '<td>' + matchCell(r) + '</td>';
+      html += '<td>';
+      html += '<select class="chk-sel" onchange="setChk(' + r.id + ', this.value)">';
+      html += '<option value="unchecked"' + (cs === 'unchecked' ? ' selected' : '') + '>未確認</option>';
+      html += '<option value="ok"'        + (cs === 'ok'        ? ' selected' : '') + '>&#10003; 確認済み</option>';
+      html += '<option value="ng"'        + (cs === 'ng'        ? ' selected' : '') + '>要差し戻し</option>';
+      html += '</select>';
+      html += '<input class="memo-in" type="text" placeholder="メモ（任意）" value="' + r.memo + '" oninput="setMemo(' + r.id + ', this.value)">';
+      html += '</td></tr>';
+    });
+    document.getElementById('tbody').innerHTML = html;
+    updateStats();
+  }
+
+  function setChk(id, val) {
+    checks[id] = val;
+    updateStats();
+  }
+
+  function setMemo(id, val) {
+    var r = rows.find(function(x) { return x.id === id; });
+    if (r) r.memo = val;
+  }
+
+  function updateStats() {
+    var done = 0, ng = 0;
+    rows.forEach(function(r) {
+      if (checks[r.id] === 'ok') done++;
+      if (checks[r.id] === 'ng') ng++;
+    });
+    var pend = rows.length - done - ng;
+    document.getElementById('s-pend').textContent  = pend;
+    document.getElementById('s-done').textContent  = done;
+    document.getElementById('s-ng').textContent    = ng;
+
+    var grand = rows.reduce(function(s, r) { return s + r.amt; }, 0);
+    document.getElementById('s-total').textContent = '¥' + grand.toLocaleString();
+
+    var doneTotal = rows
+      .filter(function(r) { return checks[r.id] === 'ok'; })
+      .reduce(function(s, r) { return s + r.amt; }, 0);
+    document.getElementById('foot-tot').textContent = '¥' + doneTotal.toLocaleString();
+
+    var pct = Math.round(done / rows.length * 100);
+    document.getElementById('prog-bar').style.width = pct + '%';
+    document.getElementById('prog-txt').textContent = done + ' / ' + rows.length + ' 件';
+
+    var allDone = (done === rows.length);
+    document.getElementById('btn-fix').disabled = !allDone;
+    document.getElementById('alert-bar').style.display = allDone ? 'none' : 'flex';
+    document.getElementById('ok-bar').style.display    = allDone ? 'flex' : 'none';
+  }
+
+  function finalize() {
+    if (!confirm('今月分の収支を最終確定しますか？\n確定後は修正できません。')) return;
+    document.getElementById('btn-fix').textContent = '確定済み';
+    document.getElementById('btn-fix').disabled = true;
+    alert('確定しました。三田さん（マネージャー・三田）へ最終承認依頼を送信しました。');
+  }
+
+  render();
+</script>
+</body>
+</html>
